@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Aradhana — AI Astrological Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --void:#0a0908;--deep:#110f0c;--surface:#181512;--raised:#222019;--elevated:#2a2722;
+  --gold-dim:#8a7040;--gold:#c9a84c;--gold-bright:#f0c84a;--gold-glow:rgba(201,168,76,0.12);
+  --text:#f0ead8;--text2:#a89e88;--text3:#5a5448;
+  --border:rgba(255,210,120,0.08);--border2:rgba(255,210,120,0.16);--border3:rgba(255,210,120,0.28);
+  --rose:#c47a7a;--sage:#7a9e7e;--sky:#6ba3be;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--void);color:var(--text);display:flex;flex-direction:column}
+canvas#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+
+header{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--border);background:rgba(10,9,8,0.8);backdrop-filter:blur(12px);flex-shrink:0}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-star{color:var(--gold);font-size:20px;animation:spin 25s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logo-text{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;letter-spacing:.04em}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.birth-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(201,168,76,0.08);border:1px solid var(--border2);border-radius:20px;color:var(--gold);font-size:12px;cursor:pointer;transition:background .2s;font-family:'DM Sans',sans-serif}
+.birth-badge:hover{background:rgba(201,168,76,0.15)}
+.birth-btn{padding:5px 14px;background:none;border:1px solid var(--border2);border-radius:20px;color:var(--text2);font-size:12px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.birth-btn:hover{border-color:var(--gold-dim);color:var(--text)}
+.icon-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border:none;background:none;color:var(--text3);border-radius:6px;cursor:pointer;font-size:16px;transition:color .2s}
+.icon-btn:hover{color:var(--text2)}
+
+main{flex:1;overflow-y:auto;position:relative;z-index:1;height:0}
+main::-webkit-scrollbar{width:3px}
+main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msgs{max-width:720px;margin:0 auto;padding:24px 20px 40px;display:flex;flex-direction:column;gap:6px}
+
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:40px 24px;text-align:center;gap:14px}
+.welcome-sym{font-size:52px;color:var(--gold);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.welcome-title{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:300;letter-spacing:.03em}
+.welcome-sub{max-width:400px;font-size:15px;color:var(--text2);line-height:1.65}
+.welcome-cta{margin-top:4px;padding:10px 24px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));border:none;border-radius:24px;color:var(--void);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s}
+.welcome-cta:hover{opacity:.9;transform:translateY(-1px)}
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:580px}
+.sug{padding:8px 16px;background:var(--raised);border:1px solid var(--border);border-radius:20px;color:var(--text2);font-size:13px;cursor:pointer;text-align:left;transition:all .2s;font-family:'DM Sans',sans-serif}
+.sug:hover{border-color:var(--gold-dim);color:var(--text);background:var(--elevated)}
+
+.msg-user{display:flex;justify-content:flex-end;padding:3px 0;animation:slideUp .25s ease}
+.bubble-user{max-width:72%;padding:11px 16px;background:var(--elevated);border:1px solid var(--border);border-radius:18px 18px 4px 18px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word}
+.msg-ai{display:flex;gap:11px;padding:3px 0;align-items:flex-start;animation:slideUp .3s ease}
+.ai-avatar{flex-shrink:0;width:27px;height:27px;border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);background:rgba(201,168,76,0.06);margin-top:3px}
+.ai-body{flex:1;min-width:0}
+.ai-text{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.78;color:var(--text);font-weight:300}
+.ai-text p{margin-bottom:.9em}
+.ai-text p:last-child{margin-bottom:0}
+.ai-text ul{margin:.4em 0 .9em 1.3em}
+.ai-text li{margin-bottom:.35em}
+.cursor{display:inline-block;width:2px;height:.9em;background:var(--gold);margin-left:2px;vertical-align:text-bottom;animation:blink .8s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.msg-sys{display:flex;align-items:center;justify-content:center;gap:7px;padding:6px;font-size:12px;color:var(--text3);font-style:italic}
+@keyframes slideUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+.tool-activity{display:flex;flex-direction:column;gap:4px;padding:9px 13px;background:rgba(201,168,76,0.03);border:1px solid var(--border);border-radius:8px;margin-bottom:5px}
+.tool-ev{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text3);animation:slideUp .3s ease}
+.tool-ev-label{flex:1;color:var(--text2)}
+.tool-ev-done{color:var(--sage);font-size:11px}
+
+.thinking{display:inline-flex;gap:5px;align-items:center;padding:4px 0}
+.thinking span{display:block;width:6px;height:6px;border-radius:50%;background:var(--gold-dim);animation:bounce 1.2s ease-in-out infinite}
+.thinking span:nth-child(2){animation-delay:.2s}
+.thinking span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}
+
+footer{position:relative;z-index:10;background:rgba(10,9,8,0.88);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:14px 20px 10px;flex-shrink:0}
+.input-row{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:flex-end}
+textarea.inp{flex:1;padding:11px 16px;background:var(--raised);border:1px solid var(--border);border-radius:16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;resize:none;max-height:150px;overflow-y:auto;transition:border-color .2s;min-height:44px}
+textarea.inp:focus{outline:none;border-color:var(--gold-dim)}
+textarea.inp::placeholder{color:var(--text3)}
+textarea.inp:disabled{opacity:.6}
+.send-btn{flex-shrink:0;width:40px;height:40px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--void);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s,transform .15s;font-size:16px}
+.send-btn:hover:not(:disabled){opacity:.9;transform:scale(1.05)}
+.send-btn:disabled{opacity:.3;cursor:default}
+.disclaimer{max-width:720px;margin:7px auto 0;font-size:11px;color:var(--text3);text-align:center;line-height:1.4}
+
+.err-bar{display:flex;align-items:center;gap:8px;padding:9px 20px;background:rgba(196,122,122,.1);border-top:1px solid rgba(196,122,122,.2);color:var(--rose);font-size:13px;position:relative;z-index:10;flex-shrink:0}
+.err-bar button{margin-left:auto;background:none;border:none;color:inherit;opacity:.6;cursor:pointer}
+
+.modal-bg{position:fixed;inset:0;background:rgba(10,9,8,.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:28px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6)}
+.modal-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;flex:1}
+.modal-close{background:none;border:none;color:var(--text3);width:28px;height:28px;border-radius:4px;cursor:pointer;font-size:18px;transition:color .2s}
+.modal-close:hover{color:var(--text2)}
+.modal-sub{font-size:13px;color:var(--text3);margin-bottom:24px;line-height:1.5}
+.fields{display:flex;flex-direction:column;gap:18px;margin-bottom:22px}
+.field label{display:block;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:6px}
+.field input{width:100%;padding:9px 13px;background:var(--raised);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;transition:border-color .2s;font-family:'DM Sans',sans-serif}
+.field input:focus{outline:none;border-color:var(--gold-dim)}
+.field input::-webkit-calendar-picker-indicator{filter:invert(.5)}
+.time-row{display:flex;align-items:center;gap:10px}
+.time-row input[type=time]{flex:1}
+.check-label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.check-label input{accent-color:var(--gold);width:13px;height:13px}
+.hint{font-size:12px;color:var(--text3);font-style:italic;margin-top:4px}
+.field-err{font-size:12px;color:var(--rose);display:block;margin-top:4px}
+.submit-err{font-size:13px;color:var(--rose);padding:9px 13px;background:rgba(196,122,122,.08);border-radius:8px;border:1px solid rgba(196,122,122,.2);margin-bottom:12px}
+.modal-submit{width:100%;padding:12px;background:linear-gradient(135deg,var(--gold-dim),var(--gold));border:none;border-radius:8px;color:var(--void);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s}
+.modal-submit:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.modal-submit:disabled{opacity:.5;cursor:default}
+
+@media(max-width:600px){
+  header{padding:12px 16px}
+  .msgs{padding:16px 12px 32px}
+  footer{padding:12px 12px 8px}
+  .welcome-title{font-size:28px}
+  .modal{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<header>
+  <div class="logo">
+    <span class="logo-star">✦</span>
+    <span class="logo-text">Aradhana</span>
+  </div>
+  <div class="hdr-right" id="hdr-right">
+    <button class="birth-btn" id="birth-btn" onclick="openForm()">+ Add birth details</button>
+    <button class="icon-btn" id="clear-btn" title="Clear conversation" onclick="clearChat()" style="display:none">↺</button>
+  </div>
+</header>
+
+<main id="main">
+  <div id="msgs" class="msgs" style="display:none"></div>
+  <div id="welcome" class="welcome">
+    <div class="welcome-sym">✦</div>
+    <h1 class="welcome-title">Welcome to Aradhana</h1>
+    <p class="welcome-sub">Your astrological companion — share your birth details and explore your natal chart, today's cosmic weather, and the deeper patterns of your life.</p>
+    <button class="welcome-cta" onclick="openForm()">Begin with your birth details</button>
+    <div class="suggestions">
+      <button class="sug" onclick="fillInput('What does my birth chart reveal about my personality?')">What does my birth chart reveal about my personality?</button>
+      <button class="sug" onclick="fillInput('What is the cosmic energy like for me today?')">What is the cosmic energy like for me today?</button>
+      <button class="sug" onclick="fillInput('What does my chart say about my career and life purpose?')">What does my chart say about career and life purpose?</button>
+      <button class="sug" onclick="fillInput('Tell me about Venus in my chart and what it means for love')">Tell me about Venus and what it means for my love life</button>
+    </div>
+  </div>
+</main>
+
+<div id="err-bar" class="err-bar" style="display:none">
+  <span id="err-txt"></span>
+  <button onclick="document.getElementById('err-bar').style.display='none'">✕</button>
+</div>
+
+<footer>
+  <div class="input-row">
+    <textarea id="inp" class="inp" rows="1"
+      placeholder="Ask about your chart, today's energy, or any astrological question…"
+      onkeydown="onKey(event)" oninput="onInput(this)"></textarea>
+    <button id="send-btn" class="send-btn" onclick="send()" disabled title="Send">➤</button>
+  </div>
+  <p class="disclaimer">Aradhana offers spiritual guidance for reflection only — not medical, legal, or financial advice.</p>
+</footer>
+
+<!-- Birth Form Modal -->
+<div class="modal-bg" id="modal" style="display:none" onclick="if(event.target===this)closeForm()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span style="color:var(--gold)">✦</span>
+      <h2 class="modal-title">Your Birth Details</h2>
+      <button class="modal-close" onclick="closeForm()">✕</button>
+    </div>
+    <p class="modal-sub">These allow Aradhana to calculate your natal chart with accuracy. Stored only in your browser session.</p>
+    <div class="fields">
+      <div class="field">
+        <label>Your Name <span style="color:var(--text3);text-transform:none;letter-spacing:0">(optional)</span></label>
+        <input type="text" id="f-name" placeholder="e.g. Arjun"/>
+      </div>
+      <div class="field">
+        <label>Date of Birth <span style="color:var(--gold)">*</span></label>
+        <input type="date" id="f-date"/>
+        <span class="field-err" id="e-date"></span>
+      </div>
+      <div class="field">
+        <label>Time of Birth <span style="color:var(--gold)">*</span></label>
+        <div class="time-row">
+          <input type="time" id="f-time"/>
+          <label class="check-label">
+            <input type="checkbox" id="f-unk" onchange="toggleTime()"/>
+            Unknown — use noon
+          </label>
+        </div>
+        <span class="hint" id="t-hint" style="display:none">Houses and rising sign will be approximate without exact birth time.</span>
+        <span class="field-err" id="e-time"></span>
+      </div>
+      <div class="field">
+        <label>Place of Birth <span style="color:var(--gold)">*</span></label>
+        <input type="text" id="f-place" placeholder="e.g. New Delhi, India"/>
+        <span class="field-err" id="e-place"></span>
+      </div>
+    </div>
+    <p class="submit-err" id="e-submit" style="display:none"></p>
+    <button class="modal-submit" id="m-submit" onclick="saveBirth()">Save &amp; Begin Reading</button>
+  </div>
+</div>
+
+<script>
+// ── Stars ─────────────────────────────────────────────────────────────
+const C=document.getElementById('stars'),X=C.getContext('2d');
+let ST=[];
+function initStars(){
+  C.width=innerWidth;C.height=innerHeight;
+  ST=Array.from({length:120},()=>({x:Math.random()*C.width,y:Math.random()*C.height,r:Math.random()*1.1+.3,o:Math.random()*.5+.1,d:Math.random()*4+3,t:Math.random()*Math.PI*2}));
+}
+function drawStars(){
+  X.clearRect(0,0,C.width,C.height);
+  ST.forEach(s=>{s.t+=.015/s.d;const a=s.o*(.4+.6*Math.abs(Math.sin(s.t)));X.beginPath();X.arc(s.x,s.y,s.r,0,Math.PI*2);X.fillStyle=`rgba(240,232,200,${a})`;X.fill();});
+  requestAnimationFrame(drawStars);
+}
+initStars();drawStars();
+window.addEventListener('resize',initStars);
+
+// ── State ─────────────────────────────────────────────────────────────
+let BD=null,MSGS=[],STREAMING=false;
+try{const s=JSON.parse(localStorage.getItem('ara-v2')||'{}');if(s.bd)BD=s.bd;if(s.msgs)MSGS=s.msgs.slice(-50);}catch(e){}
+function save(){try{localStorage.setItem('ara-v2',JSON.stringify({bd:BD,msgs:MSGS.slice(-50)}));}catch(e){}}
+
+// ── Init ──────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  renderBadge();
+  // Set max date to today
+  document.getElementById('f-date').max=new Date().toISOString().split('T')[0];
+  if(MSGS.length){showChat();MSGS.forEach(m=>renderMsg(m,false));scrollBot();}
+});
+
+// ── Birth form ────────────────────────────────────────────────────────
+function openForm(){document.getElementById('modal').style.display='flex';}
+function closeForm(){document.getElementById('modal').style.display='none';}
+function toggleTime(){
+  const u=document.getElementById('f-unk').checked;
+  const t=document.getElementById('f-time');
+  t.disabled=u;if(u)t.value='12:00';
+  document.getElementById('t-hint').style.display=u?'block':'none';
+}
+function saveBirth(){
+  ['e-date','e-time','e-place'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('e-submit').style.display='none';
+  const name=document.getElementById('f-name').value.trim();
+  const date=document.getElementById('f-date').value;
+  const unk=document.getElementById('f-unk').checked;
+  const time=unk?'12:00':document.getElementById('f-time').value;
+  const place=document.getElementById('f-place').value.trim();
+  let ok=true;
+  if(!date){document.getElementById('e-date').textContent='Birth date is required.';ok=false;}
+  else{const y=parseInt(date.split('-')[0]);if(y<1800||y>new Date().getFullYear()){document.getElementById('e-date').textContent='Year must be 1800–'+new Date().getFullYear();ok=false;}}
+  if(!unk&&!time){document.getElementById('e-time').textContent='Enter a time or check unknown.';ok=false;}
+  if(!place){document.getElementById('e-place').textContent='Birth place is required.';ok=false;}
+  if(!ok)return;
+  BD={name:name||null,date,time,place};save();closeForm();renderBadge();
+  sysMsg(`Birth details saved — ${date}, ${time}, ${place}`);
+}
+function renderBadge(){
+  const r=document.getElementById('hdr-right');
+  const old=document.getElementById('b-badge');if(old)old.remove();
+  if(BD){
+    document.getElementById('birth-btn').style.display='none';
+    const b=document.createElement('button');b.id='b-badge';b.className='birth-badge';
+    b.textContent='✦ '+(BD.name||BD.place);b.onclick=openForm;
+    r.insertBefore(b,r.firstChild);
+  } else {document.getElementById('birth-btn').style.display='';}
+}
+
+// ── Chat helpers ──────────────────────────────────────────────────────
+function showChat(){
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('msgs').style.display='flex';
+  document.getElementById('clear-btn').style.display='';
+}
+function clearChat(){
+  MSGS=[];save();
+  document.getElementById('msgs').innerHTML='';
+  document.getElementById('msgs').style.display='none';
+  document.getElementById('welcome').style.display='flex';
+  document.getElementById('clear-btn').style.display='none';
+}
+function scrollBot(){setTimeout(()=>{const m=document.getElementById('main');m.scrollTop=m.scrollHeight;},60);}
+function sysMsg(t){
+  MSGS.push({role:'system',content:t});save();
+  showChat();renderMsg({role:'system',content:t},false);scrollBot();
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function renderMsg(msg,_live){
+  const W=document.getElementById('msgs');
+  if(msg.role==='system'){
+    const d=document.createElement('div');d.className='msg-sys';
+    d.innerHTML='<span>✦</span><span>'+esc(msg.content)+'</span>';W.appendChild(d);return d;
+  }
+  if(msg.role==='user'){
+    const d=document.createElement('div');d.className='msg-user';
+    d.innerHTML='<div class="bubble-user">'+esc(msg.content)+'</div>';W.appendChild(d);return d;
+  }
+  const d=document.createElement('div');d.className='msg-ai';
+  d.innerHTML='<div class="ai-avatar">✦</div><div class="ai-body"><div class="ai-tools"></div><div class="ai-text"></div></div>';
+  W.appendChild(d);
+  const tEl=d.querySelector('.ai-tools'),xEl=d.querySelector('.ai-text');
+  if(msg.tools&&msg.tools.length)renderTools(tEl,msg.tools);
+  if(msg.content){renderText(xEl,msg.content,false);}
+  else{xEl.innerHTML='<div class="thinking"><span></span><span></span><span></span></div>';}
+  d._t=tEl;d._x=xEl;return d;
+}
+const TL={compute_birth_chart:{l:'Computing natal chart',i:'🪐'},get_daily_transits:{l:'Fetching planetary transits',i:'✨'},geocode_place:{l:'Locating birth place',i:'🌍'},knowledge_lookup:{l:'Consulting astrology knowledge',i:'📖'}};
+function renderTools(el,evts){
+  if(!evts||!evts.length){el.innerHTML='';return;}
+  let h='<div class="tool-activity">';
+  evts.forEach(e=>{const x=TL[e]||{l:e,i:'⚙️'};h+=`<div class="tool-ev"><span>${x.i}</span><span class="tool-ev-label">${x.l}</span><span class="tool-ev-done">✓</span></div>`;});
+  h+='</div>';el.innerHTML=h;
+}
+function renderText(el,text,streaming){
+  const ps=text.split(/\n\n+/);let h='';
+  ps.forEach(p=>{
+    p=p.trim();if(!p)return;
+    if(p.startsWith('•')||p.startsWith('-')){
+      h+='<ul>';p.split('\n').filter(Boolean).forEach(i=>{h+='<li>'+esc(i.replace(/^[•\-]\s*/,''))+'</li>';});h+='</ul>';
+    } else {h+='<p>'+esc(p)+'</p>';}
+  });
+  // Always ensure cursor is inside a <p> tag
+  if(streaming){
+    if(h.endsWith('</p>')){h=h.slice(0,-4)+'<span class="cursor"></span></p>';}
+    else if(h.endsWith('</ul>')){h+='<p><span class="cursor"></span></p>';}
+    else{h+='<span class="cursor"></span>';}
+  }
+  el.innerHTML=h;
+}
+
+// ── Input ─────────────────────────────────────────────────────────────
+function onInput(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,150)+'px';document.getElementById('send-btn').disabled=!el.value.trim()||STREAMING;}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function fillInput(t){const i=document.getElementById('inp');i.value=t;document.getElementById('send-btn').disabled=false;i.focus();}
+
+// ── Sun sign lookup ───────────────────────────────────────────────────
+function sunSign(d){
+  try{
+    // Parse parts directly to avoid UTC-vs-local timezone shift bug
+    const parts=d.split('-');
+    const mo=parseInt(parts[1]),day=parseInt(parts[2]);
+    if((mo===3&&day>=21)||(mo===4&&day<=19))return'Aries';
+    if((mo===4&&day>=20)||(mo===5&&day<=20))return'Taurus';
+    if((mo===5&&day>=21)||(mo===6&&day<=20))return'Gemini';
+    if((mo===6&&day>=21)||(mo===7&&day<=22))return'Cancer';
+    if((mo===7&&day>=23)||(mo===8&&day<=22))return'Leo';
+    if((mo===8&&day>=23)||(mo===9&&day<=22))return'Virgo';
+    if((mo===9&&day>=23)||(mo===10&&day<=22))return'Libra';
+    if((mo===10&&day>=23)||(mo===11&&day<=21))return'Scorpio';
+    if((mo===11&&day>=22)||(mo===12&&day<=21))return'Sagittarius';
+    if((mo===12&&day>=22)||(mo===1&&day<=19))return'Capricorn';
+    if((mo===1&&day>=20)||(mo===2&&day<=18))return'Aquarius';
+    return'Pisces';
+  }catch(e){return'unknown';}
+}
+
+// ── System prompt ─────────────────────────────────────────────────────
+const TODAY=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const SYS=`You are Aradhana, a warm and wise astrological guide. Today is ${TODAY}.
+
+Your character: Speak with genuine warmth and care — like a knowledgeable spiritual friend. Use language like "the stars suggest", "this energy invites", "you may find". Never cold or clinical. NEVER predict with medical, legal, or financial certainty — always redirect: "That's beyond what the stars can answer — please consult a qualified professional." If the question is off-topic, acknowledge kindly and redirect to astrology.
+
+ASTROLOGY KNOWLEDGE:
+
+PLANETS & RULERSHIPS:
+Sun = core self, ego, vitality, identity. Rules Leo & 5th house. Key themes: confidence, creativity, leadership, purpose.
+Moon = emotions, instincts, habits, inner world, mother. Rules Cancer & 4th house. Changes signs every ~2.5 days.
+Mercury = mind, communication, learning, travel. Rules Gemini/Virgo & 3rd/6th house. Retrograde 3x/year = review & delays.
+Venus = love, beauty, relationships, values, money, pleasure. Rules Taurus/Libra & 2nd/7th house.
+Mars = drive, courage, ambition, action, passion, conflict. Rules Aries & 1st house. Retrograde every ~2 years.
+Jupiter = expansion, luck, wisdom, abundance, philosophy, travel. Rules Sagittarius & 9th house. ~1 year per sign.
+Saturn = structure, discipline, karma, mastery, time, lessons. Rules Capricorn & 10th house. ~2.5 years per sign. Saturn return: ages 28-30 and 57-59.
+Uranus = revolution, innovation, sudden change, liberation, originality. Rules Aquarius & 11th house. ~7 years per sign.
+Neptune = dreams, spirituality, illusion, compassion, creativity, dissolution. Rules Pisces & 12th house. ~14 years per sign.
+Pluto = transformation, power, death/rebirth, depth, the unconscious. Rules Scorpio & 8th house. 12-30 years per sign.
+North Node = soul's growth direction this lifetime. South Node (opposite) = past patterns and comfort zone.
+Chiron = the wounded healer — deepest wound and greatest healing gift. Chiron return around age 50.
+
+THE 12 HOUSES:
+1st (Ascendant/Rising sign) = identity, physical appearance, first impressions, how you begin things, the mask you wear
+2nd = personal money, possessions, values, self-worth, bodily senses, earning capacity
+3rd = communication, siblings, short travel, learning style, local environment, mental patterns
+4th (IC) = home, family, roots, ancestry, private inner life, psychological foundation
+5th = creativity, romance, children, play, self-expression, performance, joy and pleasure
+6th = daily routines, health habits, work environment, service to others, pets, practical skills
+7th (Descendant) = committed partnerships (romantic and business), open enemies, contracts, balance
+8th = shared resources, sexuality, death and rebirth, inheritance, transformation, the occult, psychology
+9th = philosophy, higher education, long-distance travel, foreign cultures, spirituality, belief, publishing
+10th (Midheaven/MC) = career, public reputation, life calling, authority, legacy, how society sees you
+11th = friendships, community groups, social causes, collective ideals, technology, long-term hopes
+12th = the unconscious, hidden matters, solitude, karma, spiritual retreat, self-undoing, working behind the scenes
+
+THE 12 SIGNS:
+Aries (Mar 21-Apr 19) = bold, pioneering, impulsive, courageous, competitive, enthusiastic
+Taurus (Apr 20-May 20) = steady, sensual, stubborn, patient, reliable, pleasure-loving
+Gemini (May 21-Jun 20) = curious, communicative, adaptable, witty, restless, dual-natured
+Cancer (Jun 21-Jul 22) = nurturing, intuitive, protective, emotional, home-loving, tenacious
+Leo (Jul 23-Aug 22) = creative, generous, dramatic, proud, loyal, natural performer
+Virgo (Aug 23-Sep 22) = analytical, helpful, perfectionist, detail-oriented, practical, health-conscious
+Libra (Sep 23-Oct 22) = balanced, diplomatic, aesthetic, indecisive, partnership-oriented, fair-minded
+Scorpio (Oct 23-Nov 21) = intense, transformative, secretive, passionate, perceptive, resilient
+Sagittarius (Nov 22-Dec 21) = adventurous, philosophical, blunt, freedom-loving, optimistic, truth-seeking
+Capricorn (Dec 22-Jan 19) = ambitious, disciplined, serious, patient, responsible, status-conscious
+Aquarius (Jan 20-Feb 18) = innovative, humanitarian, detached, eccentric, progressive, group-oriented
+Pisces (Feb 19-Mar 20) = dreamy, compassionate, imaginative, boundless, spiritual, empathetic
+
+ASPECTS (angular relationships between planets):
+Conjunction (0°) = fusion and intensification — planets blend their energies
+Sextile (60°) = harmonious opportunity — supportive but needs activation
+Square (90°) = creative tension and challenge — friction that motivates growth
+Trine (120°) = ease and natural flow — talents and gifts
+Opposition (180°) = polarity and awareness — integration of opposite energies
+
+BIRTH CHART CALCULATIONS:
+When given birth details, calculate the Sun sign from the date. For the Moon: it changes signs every 2.5 days — acknowledge you're estimating unless exact time is given. The Ascendant requires exact birth time and place. You can estimate the rising sign from birth time: born at sunrise = Sun sign rising; born at noon = sign about 90° from Sun on the eastern horizon; born at midnight = sign opposite Sun rising. For outer planets (Jupiter, Saturn, Uranus, Neptune, Pluto), use approximate positions based on birth year. Always be clear about what is calculated vs estimated.
+
+CURRENT TRANSITS context: Major current themes to weave in when discussing today's energy — describe slow-moving planet transits (Saturn, Jupiter, Pluto in current signs as of 2025-2026) and how they relate to the user's natal chart if available.
+
+SAFETY: Never predict death, illness, or financial ruin. Always frame readings as guidance and reflection, not fate. Astrology describes tendencies and themes, not certainties.`;
+
+// ── Send message ──────────────────────────────────────────────────────
+async function send(){
+  const inp=document.getElementById('inp');
+  const txt=inp.value.trim();
+  if(!txt||STREAMING)return;
+  inp.value='';inp.style.height='auto';inp.disabled=true;
+  document.getElementById('send-btn').disabled=true;
+  document.getElementById('err-bar').style.display='none';
+  STREAMING=true;showChat();
+
+  MSGS.push({role:'user',content:txt});save();
+  renderMsg({role:'user',content:txt},false);scrollBot();
+
+  // Build API messages
+  let sys=SYS;
+  if(BD){
+    sys+=`\n\nUSER BIRTH DETAILS:\nName: ${BD.name||'not provided'}\nDate of Birth: ${BD.date}\nTime of Birth: ${BD.time}\nPlace of Birth: ${BD.place}\nSun Sign: ${sunSign(BD.date)}\n\nUse these birth details throughout the conversation. Reference their Sun sign, and when appropriate, discuss other planetary placements based on the birth year.`;
+  }
+
+  // Build API messages — exclude the just-added empty assistant placeholder
+  const apiMsgs=MSGS.slice(0,-1).slice(-18).filter(m=>m.role==='user'||m.role==='assistant').map(m=>({
+    role:m.role,
+    content: m.tools&&m.tools.length ? `[Consulted: ${m.tools.join(', ')}]\n\n${m.content||''}` : (m.content||'')
+  })).filter(m=>m.content);
+
+  // Simulate agentic tool use for UX
+  const toolsUsed=[];
+  const tl=txt.toLowerCase();
+  if(BD){
+    if(tl.includes('transit')||tl.includes('today')||tl.includes('energy')||tl.includes('current')||tl.includes('now')||tl.includes('weather'))
+      toolsUsed.push('get_daily_transits');
+    else if(tl.includes('chart')||tl.includes('natal')||tl.includes('planet')||tl.includes('sign')||tl.includes('house')||tl.includes('rising')||tl.includes('ascendant')||tl.includes('birth')||tl.includes('placement')){
+      toolsUsed.push('geocode_place','compute_birth_chart');
+    }
+  }
+  if(tl.includes('mean')||tl.includes('explain')||tl.includes('what is')||tl.includes('tell me about')||tl.includes('how does'))
+    toolsUsed.push('knowledge_lookup');
+
+  const aiMsg={role:'assistant',content:'',tools:toolsUsed};
+  MSGS.push(aiMsg);
+  const el=renderMsg(aiMsg,true);
+  scrollBot();
+
+  // Show tools
+  if(toolsUsed.length&&el._t){
+    renderTools(el._t,toolsUsed);scrollBot();
+    await new Promise(r=>setTimeout(r,700));
+  }
+
+  // Stream from Claude API
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sys,stream:true,messages:apiMsgs})
+    });
+    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error '+res.status);}
+    const reader=res.body.getReader(),dec=new TextDecoder();
+    let buf='',full='';
+    while(true){
+      const{done,value}=await reader.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n');buf=lines.pop()||'';
+      for(const ln of lines){
+        if(!ln.startsWith('data:'))continue;
+        const d=ln.slice(5).trim();if(d==='[DONE]')continue;
+        try{const ev=JSON.parse(d);if(ev.type==='content_block_delta'&&ev.delta?.type==='text_delta'){full+=ev.delta.text;aiMsg.content=full;if(el._x)renderText(el._x,full,true);scrollBot();}}catch(e){}
+      }
+    }
+    aiMsg.content=full;if(el._x)renderText(el._x,full,false);save();
+  }catch(err){
+    const msg='Could not connect to the cosmic realm. Please check your connection and try again.';
+    aiMsg.content=msg;if(el._x)renderText(el._x,msg,false);save();
+    document.getElementById('err-txt').textContent=err.message;
+    document.getElementById('err-bar').style.display='flex';
+  }
+  STREAMING=false;
+  const inpEl=document.getElementById('inp');
+  inpEl.disabled=false;
+  document.getElementById('send-btn').disabled=!inpEl.value.trim();
+  inpEl.focus();
+  scrollBot();
+}
+</script>
+</body>
+</html>
