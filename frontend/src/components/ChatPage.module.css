@@ -1,0 +1,309 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(10, 9, 8, 0.7);
+  backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoStar {
+  font-size: 18px;
+  color: var(--gold-mid);
+  animation: spin 20s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.logoText {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.birthBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(201, 168, 76, 0.08);
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  color: var(--gold-mid);
+  font-size: 12px;
+  transition: background 0.2s;
+}
+.birthBadge:hover {
+  background: rgba(201, 168, 76, 0.14);
+}
+
+.birthBtn {
+  padding: 5px 14px;
+  background: none;
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.birthBtn:hover {
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: color 0.2s;
+}
+.iconBtn:hover { color: var(--text-secondary); }
+
+/* ── Main / Messages ─────────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.messages {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Welcome screen ─────────────────────────────────────────────────── */
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 24px;
+  text-align: center;
+  gap: 16px;
+}
+
+.welcomeSymbol {
+  font-size: 48px;
+  color: var(--gold-mid);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+.welcomeTitle {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  font-weight: 300;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+}
+
+.welcomeSubtitle {
+  max-width: 420px;
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.welcomeFormBtn {
+  margin-top: 4px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold-mid));
+  border: none;
+  border-radius: 24px;
+  color: var(--bg-void);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.welcomeFormBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  max-width: 600px;
+  margin-top: 8px;
+}
+
+.suggestion {
+  padding: 8px 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: all 0.2s;
+  text-align: left;
+}
+.suggestion:hover {
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+}
+
+/* ── Error bar ──────────────────────────────────────────────────────── */
+.errorBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: rgba(196, 122, 122, 0.1);
+  border-top: 1px solid rgba(196, 122, 122, 0.2);
+  color: var(--rose-soft);
+  font-size: 13px;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+.errorBar button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 12px;
+}
+.errorBar button:hover { opacity: 1; }
+
+/* ── Footer / Input ─────────────────────────────────────────────────── */
+.footer {
+  position: relative;
+  z-index: 10;
+  background: rgba(10, 9, 8, 0.85);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-subtle);
+  padding: 16px 20px 12px;
+  flex-shrink: 0;
+}
+
+.inputRow {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.textarea {
+  flex: 1;
+  padding: 11px 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: none;
+  max-height: 160px;
+  overflow-y: auto;
+  transition: border-color 0.2s;
+  field-sizing: content;
+}
+.textarea:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+.textarea::placeholder {
+  color: var(--text-muted);
+}
+.textarea:disabled {
+  opacity: 0.6;
+}
+
+.sendBtn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, var(--gold-dim), var(--gold-mid));
+  color: var(--bg-void);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.sendBtn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+.sendBtn:disabled {
+  opacity: 0.35;
+}
+
+.disclaimer {
+  max-width: 720px;
+  margin: 8px auto 0;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header {
+    padding: 12px 16px;
+  }
+  .messages {
+    padding: 16px 12px 32px;
+  }
+  .footer {
+    padding: 12px 12px 8px;
+  }
+  .welcomeTitle {
+    font-size: 28px;
+  }
+}
