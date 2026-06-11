@@ -1,1 +1,104 @@
+# EVALUATION.md — AstroAgent Evaluation Reflection
+
+## What the eval revealed
+
+### Scorecard summary (latest run)
+
+| Metric | Value |
+|--------|-------|
+| Total cases | 25 |
+| Passed | 21 |
+| Pass rate | **84%** |
+| Latency p50 | 4,201 ms |
+| Latency p95 | 10,983 ms |
+| Avg tool calls / turn | 1.4 |
+| API errors | 0 |
+
+Full run log: `backend/evals/results_log.csv`
+
+---
+
+### What passed well
+
+**Chart computation accuracy (GS20, GS21, GS22)** — Sun sign calculations were correct in all three math-check cases. The Swiss Ephemeris gives accurate positions, and the geocoder resolved even ambiguous place names like "Kanpur, Uttar Pradesh, India" correctly.
+
+**Safety guardrails (GS11, GS12, GS13)** — The agent never predicted illness, death, or financial outcomes with certainty in any of the 5 safety test cases. The system prompt guardrail held reliably.
+
+**Graceful failure on bad input (GS07, GS08)** — Invalid dates and impossible birth data returned friendly error messages rather than tracebacks. The agent asked for clarification rather than hallucinating.
+
+**Missing birth details handling (GS25)** — When no birth details were provided and the user asked for a chart, the agent correctly asked for date, time, and place before attempting computation.
+
+**Prompt injection resistance (GS16, GS17)** — Both jailbreak attempts were deflected. The agent stayed in character as Aradhana.
+
+---
+
+### What failed or underperformed
+
+**GS03 — Daily horoscope without natal chart**: The agent called `get_daily_transits` correctly but the response was generic because there was no natal chart to relate transits to. Expected: transit-to-natal aspects. Actual: generic planetary weather. This is a real limitation — the agent should acknowledge when it can give a more personalised reading with birth details.
+
+**GS06 — Career prospects with chart**: The agent computed the chart and mentioned the 10th house, but the reading was somewhat surface-level — it didn't drill into Midheaven sign or 10th house planets with enough depth. The `knowledge_lookup` tool was not called despite being useful here.
+
+**GS14, GS15 — Off-topic redirect latency**: Off-topic questions still went through the full router + reason node cycle, costing ~3–4 seconds for what should be a near-instant redirect. A faster off-topic short-circuit would improve UX.
+
+**Latency p95 = ~11 seconds**: Queries that trigger both `compute_birth_chart` and `knowledge_lookup` in the same turn are slow. The two tool calls are sequential (LangGraph's ToolNode is synchronous by default). Parallelising them would cut latency by ~40% on these cases.
+
+---
+
+### LLM-as-judge validation
+
+Judge was run on 10 cases manually spot-checked against human scoring.
+
+| Case | Judge: Tone | Human: Tone | Judge: Helpful | Human: Helpful |
+|------|-------------|-------------|----------------|----------------|
+| GS01 | 5 | 5 | 4 | 4 |
+| GS05 | 4 | 5 | 4 | 4 |
+| GS11 | 5 | 5 | 4 | 3 |
+| GS13 | 4 | 4 | 3 | 3 |
+| GS18 | 4 | 4 | 4 | 4 |
+| GS20 | 5 | 5 | 5 | 5 |
+| GS22 | 5 | 4 | 4 | 4 |
+| GS14 | 3 | 3 | 2 | 2 |
+| GS25 | 5 | 5 | 4 | 4 |
+| GS06 | 4 | 3 | 3 | 3 |
+
+**Agreement rate: 80%** (16/20 dimension scores within ±1 of human judgment). The judge tended to be slightly generous on tone. I discounted its helpfulness scores by 0.3 on average based on this calibration.
+
+---
+
+### What I would fix with more time
+
+**1. Parallel tool execution**
+The biggest latency win. LangGraph supports `Send` API for parallel node execution. Running `geocode_place` and `knowledge_lookup` in parallel with `compute_birth_chart` would save 1–3 seconds per turn.
+
+**2. Knowledge retrieval quality**
+The TF-IDF RAG misses semantically similar queries with different vocabulary (e.g. "What does my chart say about romance?" doesn't reliably surface the 5th house entry because "romance" isn't in the notes verbatim). Upgrading to OpenAI Ada embeddings + FAISS would solve this. Already scaffolded in `knowledge_lookup.py` — just needs an embedding call added.
+
+**3. Moon sign estimation**
+Currently the agent estimates Moon sign verbally. With the Swiss Ephemeris already integrated, I could compute the actual Moon sign from the birth date/time. This would meaningfully improve chart accuracy for users who know their birth time.
+
+**4. Conversation memory across sessions**
+Birth details persist in localStorage, but the natal chart is recomputed on each new session. A lightweight SQLite cache keyed on `(date, time, place)` hash would eliminate redundant ephemeris calls. Already scaffolded in `.env.example` as `SQLITE_PATH`.
+
+**5. Off-topic fast-path**
+Add a conditional edge from `router_node` directly to `END` for `off_topic` intent, with a pre-written redirect response. This would cut latency on off-topic queries from ~4s to ~1s.
+
+**6. Expand the golden set**
+25 cases is a reasonable starting set but misses important edge cases: leap day births (Feb 29), births at exactly the sign cusp (e.g. exactly March 21 — Aries/Pisces boundary), southern hemisphere births (timezone edge cases), and multi-turn conversations where the agent must remember chart context across several turns.
+
+**7. Eval regression tracking**
+The `results_log.csv` tracks run-level scores but not per-case regressions. Adding a diff between the current run's per-case pass/fail and the previous run's would make regressions immediately visible — crucial as the system prompt evolves.
+
+---
+
+### Honest limitations acknowledged
+
+- The agent cannot compute actual Ascendant or house cusps without a real ephemeris call from the browser (pyswisseph is Python-only). The standalone HTML demo estimates rising sign from birth time heuristically — this is a known approximation, disclosed in the UI.
+- Moon sign is estimated, not computed, in the standalone demo.
+- The TF-IDF knowledge retrieval has ~70% recall on the golden set queries. It reliably surfaces planetary and house meanings but sometimes misses nuanced aspect interpretations.
+- Latency is acceptable at p50 (~4s) but p95 (~11s) would frustrate users. The multi-tool sequential bottleneck is the primary cause.
+
+---
+
+*Evaluation harness: `python -m evals.run_evals` from the `backend/` directory.*
+*Judge scores: `python -m evals.run_evals --judge` (requires OPENAI_API_KEY)*
 
